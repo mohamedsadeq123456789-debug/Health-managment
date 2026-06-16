@@ -1,0 +1,179 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Children - Vitalyze</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+</head>
+
+<body>
+  <div class="container">
+    <div class="nav">
+      <div class="brand">Vitalyze</div>
+      <div class="row" style="justify-content:flex-end;">
+        <button class="btn secondary" onclick="window.location.href='dashboard.html'">Dashboard</button>
+        <button class="btn danger" onclick="logout()">Logout</button>
+      </div>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <h2>Add Child</h2>
+        <p>Create a child profile to get age-based health guidance.</p>
+
+        <label>Child Name</label>
+        <input id="childName" placeholder="e.g. Ahmad" />
+
+        <div class="row">
+          <div>
+            <label>Age (Years)</label>
+            <input id="ageYears" type="number" min="0" max="18" placeholder="e.g. 4" />
+          </div>
+          <div>
+            <label>Gender</label>
+            <select id="gender">
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:14px;">
+          <button class="btn" id="btnAddChild">Add</button>
+          <button class="btn secondary" id="btnSeed">Seed Guides</button>
+        </div>
+
+        <div class="hr"></div>
+        <div id="msg" class="small"></div>
+      </div>
+
+      <div class="card">
+        <h2>Children</h2>
+        <div id="childrenList" class="list"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px;">
+      <h2>Child Guide</h2>
+      <div id="guideBox" class="small">Select a child to view guidance.</div>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    requireAuth();
+
+    async function loadChildren() {
+      const list = document.getElementById('childrenList');
+      list.innerHTML = 'Loading...';
+      try {
+        const data = await api('/api/children', { headers: authHeaders() });
+        list.innerHTML = '';
+        (data.items || []).forEach(ch => {
+          const div = document.createElement('div');
+          div.className = 'item';
+          div.innerHTML = `
+            <div class="kv"><b>${ch.childName}</b><span>${ch.ageYears} yrs</span></div>
+            <div class="small">${ch.gender}</div>
+            <div style="margin-top:10px;">
+              <button class="btn secondary" data-id="${ch._id}">View Guide</button>
+            </div>
+          `;
+          div.querySelector('button').onclick = () => loadGuide(ch._id);
+          list.appendChild(div);
+        });
+
+        if ((data.items || []).length === 0) {
+          list.innerHTML = '<div class="small">No children yet.</div>';
+        }
+      } catch (e) {
+        list.innerHTML = `<div class="small">${e.message}</div>`;
+      }
+    }
+
+    async function loadGuide(childId) {
+      const box = document.getElementById('guideBox');
+      box.textContent = 'Loading guide...';
+      try {
+        const data = await api(`/api/children/${childId}/guide`, { headers: authHeaders() });
+        const g = data.guide;
+
+        const conditionsHtml = (g.commonConditions || []).map(c => `
+          <div class="item" style="margin-top:10px;">
+            <div><b>${c.name}</b></div>
+            <div class="small"><b>Symptoms:</b> ${(c.symptoms || []).join(' • ') || '—'}</div>
+            <div class="small"><b>Red flags:</b> ${(c.redFlags || []).join(' • ') || '—'}</div>
+            <div class="small"><b>Prevention:</b> ${(c.prevention || []).join(' • ') || '—'}</div>
+          </div>
+        `).join('');
+
+        box.innerHTML = `
+          <div class="kv"><b>${data.child.name}</b><span>${data.child.ageYears} yrs</span></div>
+          <div class="hr"></div>
+          <div><b>${g.title}</b></div>
+          ${conditionsHtml || '<div class="small">No conditions in this guide.</div>'}
+          <div class="hr"></div>
+          <div class="small">${data.disclaimer}</div>
+        `;
+      } catch (e) {
+        box.textContent = e.message;
+      }
+    }
+
+    document.getElementById('btnAddChild').onclick = async () => {
+      const childName = document.getElementById('childName').value.trim();
+      const ageYears = document.getElementById('ageYears').value;
+      const gender = document.getElementById('gender').value;
+
+      if (!childName || ageYears === '') {
+        return swalInfo('Missing data', 'Please enter child name and age.');
+      }
+
+      swalLoading('Adding child...');
+      try {
+        await api('/api/children', {
+          method: 'POST',
+          headers: authHeaders(),
+          body: { childName, ageYears, gender }
+        });
+        swalClose();
+        await swalOk('Added', 'Child profile created.');
+        await loadChildren();
+      } catch (e) {
+        swalClose();
+        swalError('Add failed', e.message);
+      }
+    };
+
+    document.getElementById('btnSeed').onclick = async () => {
+      const result = await Swal.fire({
+        icon: 'warning',
+        title: 'Seed guides?',
+        text: 'This will (optionally) clear and re-insert sample guides.',
+        showCancelButton: true,
+        confirmButtonText: 'Yes',
+        cancelButtonText: 'Cancel'
+      });
+      if (!result.isConfirmed) return;
+
+      swalLoading('Seeding guides...');
+      try {
+        await api('/api/guides/seed?clear=1', { method: 'POST', headers: authHeaders(), body: {} });
+        swalClose();
+        await swalOk('Done', 'Guides seeded.');
+      } catch (e) {
+        swalClose();
+        swalError('Seed failed', e.message);
+      }
+    };
+    loadChildren();
+  </script>
+</body>
+
+</html>

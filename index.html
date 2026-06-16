@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vitalyze - الصحة العامة</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<body>
+    <div class="container">
+        <div class="nav">
+            <div class="brand">Vitalyze</div>
+            <div class="row" style="justify-content:flex-end;">
+                <button class="btn secondary" onclick="goLogin()">تسجيل الدخول</button>
+                <button class="btn" onclick="goStart()">ابدأ الآن</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h1 style="margin-bottom:10px;">صحتك تبدأ من فهم المؤشرات الأساسية</h1>
+            <p>
+                Vitalyze يساعدك على إدخال قراءات بسيطة مثل ضغط الدم والنبض والسكر والحرارة،
+                ثم يقدّم لك تقريرًا توعويًا مع نصائح وتحذيرات مبسطة. كما يوفر إرشادات للأطفال حسب العمر.
+            </p>
+
+            <div class="grid grid-2" style="margin-top:14px;">
+                <div class="item">
+                    <h3>تقرير توعوي للبالغين</h3>
+                    <p class="small">
+                        أدخل قراءاتك واحصل على تقييم توعوي (Low/Medium/High) مع نصائح تحسين عامة.
+                    </p>
+                </div>
+
+                <div class="item">
+                    <h3>إرشادات للأطفال حسب العمر</h3>
+                    <p class="small">
+                        أدخل بيانات الطفل (العمر والجنس) لعرض معلومات شائعة عن أمراض وأعراض متوقعة وطرق الوقاية.
+                    </p>
+                </div>
+            </div>
+
+            <div class="hr"></div>
+            <div class="small">
+                تنبيه: المحتوى توعوي عام ولا يُعد تشخيصًا طبيًا. إذا لديك أعراض قوية أو مستمرة، راجع الطبيب أو الطوارئ.
+            </div>
+
+            <div style="margin-top:14px;" class="row">
+                <button class="btn" onclick="goStart()">ابدأ الآن</button>
+                <button class="btn secondary" onclick="goDocs()">Swagger API</button>
+            </div>
+        </div>
+        <div class="card" style="margin-top:14px;">
+            <h2>كيف يعمل Vitalyze؟</h2>
+            <div class="grid grid-2">
+                <div class="item">
+                    <b>1) أدخل القراءات</b>
+                    <div class="small">ضغط الدم، النبض، السكر، الحرارة (بيانات بسيطة وسريعة).</div>
+                </div>
+                <div class="item">
+                    <b>2) احصل على تقرير توعوي</b>
+                    <div class="small">تقييم عام (Low/Medium/High) مع نصائح وتحذيرات مبسطة.</div>
+                </div>
+                <div class="item">
+                    <b>3) تتبّع التحسن</b>
+                    <div class="small">Insights تقارن آخر قراءتين لتفهم الاتجاه العام.</div>
+                </div>
+                <div class="item">
+                    <b>4) للأطفال</b>
+                    <div class="small">إرشادات حسب العمر: أعراض شائعة ووقاية وعلامات تستدعي انتباه.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top:14px;">
+            <h2>متى تحتاج مراجعة طبية؟</h2>
+            <p class="small">هذه أمثلة عامة للتوعية فقط:</p>
+            <div class="grid grid-2">
+                <div class="item"><b>ضغط شديد الارتفاع</b>
+                    <div class="small">مثل قراءات عالية جدًا مع صداع شديد/ألم صدر/ضيق نفس.</div>
+                </div>
+                <div class="item"><b>سكر شديد الارتفاع أو الانخفاض</b>
+                    <div class="small">خصوصًا مع دوخة شديدة/تعرّق/ارتباك.</div>
+                </div>
+                <div class="item"><b>حرارة عالية مستمرة</b>
+                    <div class="small">خصوصًا للأطفال أو مع خمول شديد.</div>
+                </div>
+                <div class="item"><b>أعراض مقلقة</b>
+                    <div class="small">إغماء، صعوبة تنفس، ألم صدر، تشنجات.</div>
+                </div>
+            </div>
+            <div class="hr"></div>
+            <div class="small">تنبيه: المحتوى توعوي وليس بديلًا عن الطبيب.</div>
+        </div>
+
+        <div class="card" style="margin-top:14px;">
+            <h2>نصائح صحة عامة (سريعة)</h2>
+            <div class="grid grid-2">
+                <div class="item"><b>النوم</b>
+                    <div class="small">7–8 ساعات يوميًا يساعد على استقرار الضغط والهرمونات.</div>
+                </div>
+                <div class="item"><b>الماء</b>
+                    <div class="small">اشرب ماء كفاية وراقب لون البول كإشارة بسيطة للترطيب.</div>
+                </div>
+                <div class="item"><b>الحركة</b>
+                    <div class="small">30 دقيقة مشي أغلب أيام الأسبوع تحسن الصحة القلبية.</div>
+                </div>
+                <div class="item"><b>الغذاء</b>
+                    <div class="small">قلّل السكريات والمقليات وزيد الخضار والبروتين المتوازن.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        function goLogin() {
+            window.location.href = 'login.html';
+        }
+
+        function goStart() {
+            // لو عنده توكن: يروح للداشبورد، غير هيك يروح للّوغن
+            if (getToken()) window.location.href = 'dashboard.html';
+            else window.location.href = 'login.html';
+        }
+
+        function goDocs() {
+            window.open('http://localhost:5000/api-docs', '_blank');
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,193 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard - Vitalyze</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+</head>
+
+<body>
+  <div class="container">
+    <div class="nav">
+      <div class="brand">Vitalyze</div>
+      <div class="row" style="justify-content:flex-end;">
+        <button class="btn secondary" onclick="window.location.href='children.html'">Children</button>
+        <button class="btn danger" onclick="logout()">Logout</button>
+      </div>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <h2>Add Vitals</h2>
+        <p>Enter basic readings to generate a guidance report.</p>
+
+        <div class="row">
+          <div>
+            <label>Systolic</label>
+            <input id="sys" type="number" placeholder="e.g. 120" />
+          </div>
+          <div>
+            <label>Diastolic</label>
+            <input id="dia" type="number" placeholder="e.g. 80" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Heart Rate</label>
+            <input id="hr" type="number" placeholder="e.g. 72" />
+          </div>
+          <div>
+            <label>Blood Sugar (mg/dL)</label>
+            <input id="sugar" type="number" placeholder="e.g. 110" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Temperature (°C)</label>
+            <input id="temp" type="number" step="0.1" placeholder="e.g. 36.7" />
+          </div>
+          <div>
+            <label>Measured At (optional)</label>
+            <input id="measuredAt" type="datetime-local" />
+          </div>
+        </div>
+
+        <label>Notes (optional)</label>
+        <textarea id="notes" placeholder="Any symptoms or notes..."></textarea>
+
+        <div class="row" style="margin-top:14px;">
+          <button class="btn" id="btnSave">Save Vitals</button>
+          <button class="btn secondary" id="btnGen">Generate Report</button>
+        </div>
+
+        <div class="hr"></div>
+        <div id="msg" class="small"></div>
+      </div>
+
+      <div class="card">
+        <h2>Latest Report</h2>
+        <div id="reportBox" class="small">No report yet.</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px;">
+      <h2>Latest Insights</h2>
+      <p>Simple comparison between last two readings.</p>
+      <div id="insightsBox" class="small">No insights yet.</div>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    requireAuth();
+
+    async function loadLatestReport() {
+      const box = document.getElementById('reportBox');
+      box.textContent = 'Loading...';
+      try {
+        const data = await api('/api/reports/adult/latest', {
+          headers: authHeaders()
+        });
+        const r = data.report;
+        box.innerHTML = `
+          <div class="kv"><b>Risk</b><span class="badge ${badgeClass(r.riskLevel)}">${r.riskLevel.toUpperCase()}</span></div>
+          <div class="hr"></div>
+          <div><b>Summary</b><div class="small">${r.summary}</div></div>
+          <div class="hr"></div>
+          <div><b>Warnings</b><div class="small">${(r.warnings || []).map(x => `• ${x}`).join('<br>') || '—'}</div></div>
+          <div class="hr"></div>
+          <div><b>Recommendations</b><div class="small">${(r.recommendations || []).map(x => `• ${x}`).join('<br>') || '—'}</div></div>
+          <div class="hr"></div>
+          <div class="small">${r.disclaimer}</div>
+        `;
+      } catch (e) {
+        box.textContent = e.message;
+      }
+    }
+
+    async function loadInsights() {
+      const box = document.getElementById('insightsBox');
+      box.textContent = 'Loading...';
+      try {
+        const data = await api('/api/vitals/insights/latest', { headers: authHeaders() });
+        if (!data.insights) {
+          box.textContent = 'Add at least two readings to see insights.';
+          return;
+        }
+        const i = data.insights;
+        box.innerHTML = `
+          <div class="kv"><b>Trend</b><span>${i.bpTrend}</span></div>
+          <div class="kv"><b>HR Δ</b><span>${i.heartRateDelta ?? '—'}</span></div>
+          <div class="kv"><b>Sugar Δ</b><span>${i.bloodSugarDelta ?? '—'}</span></div>
+          <div class="kv"><b>Temp Δ</b><span>${i.temperatureDelta ?? '—'}</span></div>
+          <div class="kv"><b>SYS Δ</b><span>${i.systolicDelta ?? '—'}</span></div>
+          <div class="kv"><b>DIA Δ</b><span>${i.diastolicDelta ?? '—'}</span></div>
+          <div class="hr"></div>
+          <div class="small">Latest: ${fmtDate(i.latestAt)}<br>Previous: ${fmtDate(i.previousAt)}</div>
+        `;
+      } catch (e) {
+        box.textContent = e.message;
+      }
+    }
+
+    document.getElementById('btnSave').onclick = async () => {
+      const measuredAtRaw = document.getElementById('measuredAt').value;
+      const measuredAt = measuredAtRaw ? new Date(measuredAtRaw).toISOString() : null;
+
+      const body = {
+        measuredAt,
+        bloodPressureSystolic: document.getElementById('sys').value,
+        bloodPressureDiastolic: document.getElementById('dia').value,
+        heartRate: document.getElementById('hr').value,
+        bloodSugar: document.getElementById('sugar').value,
+        temperature: document.getElementById('temp').value,
+        notes: document.getElementById('notes').value
+      };
+
+      swalLoading('Saving vitals...');
+      try {
+        const data = await api('/api/vitals', {
+          method: 'POST',
+          headers: authHeaders(),
+          body
+        });
+        swalClose();
+        await swalOk('Saved', 'Vitals saved successfully.');
+        await loadInsights();
+      } catch (e) {
+        swalClose();
+        swalError('Save failed', e.message);
+      }
+    };
+
+    document.getElementById('btnGen').onclick = async () => {
+      swalLoading('Generating report...');
+      try {
+        await api('/api/reports/adult/generate', {
+          method: 'POST',
+          headers: authHeaders(),
+          body: {}
+        });
+        swalClose();
+        await swalOk('Done', 'Report generated.');
+        await loadLatestReport();
+      } catch (e) {
+        swalClose();
+        swalError('Report failed', e.message);
+      }
+    };
+
+    // initial load
+    loadLatestReport();
+    loadInsights();
+  </script>
+</body>
+
+</html>
