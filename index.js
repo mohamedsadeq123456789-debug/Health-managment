@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -12,10 +13,15 @@ app.use(express.json());
 // =====================
 // CONFIG (inline)
 // =====================
-const MONGO_URI = 'mongodb+srv://Mohammad:RS3FYmUPgOVYa2kT@health.xwckolp.mongodb.net/?appName=TestCluster&retryWrites=true&w=majority';
+const MONGO_URI = process.env.MONGO_URI;
 
-const JWT_SECRET = 'super_secret_key_change_me_application_mohammad'; // غيرها
-const PORT = 5000;
+const JWT_SECRET = process.env.JWT_SECRET;
+const PORT = process.env.PORT || 5000;
+
+if (!MONGO_URI || !JWT_SECRET) {
+  console.error('Missing MONGO_URI or JWT_SECRET. Copy .env.example to .env and fill it in.');
+  process.exit(1);
+}
 
 // =====================
 // Mongo Connect
